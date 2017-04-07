@@ -1,8 +1,9 @@
 import socket
 import sys
 import threading
+import pickle
 
-class servidor(object):
+class Servidor(object):
 	"""Servidos basico para chat, hecho en python3 """
 	def __init__(self, host='localhost',port=10000):
 		self.clients = []
@@ -14,32 +15,32 @@ class servidor(object):
 
 		# hilos para mandar msj y aceptar las conexiones		
 		acept = threading.Thread(target = self.acept_client)
+		connect = threading.Thread(target = self.recv_msg)
+
 		acept.daemon = True
 		acept.start()
 
-		conect = threading.Thread(target = self.recv_msg)
-		conect.daemon = True
-		conect.start()
+		connect.daemon = True
+		connect.start()
 
 		# bucle con la condicion de fin para el servidor		
-		try:
-			while True:
-				message = input('> ')
-				if message == 'salir':					
-					self.sock.close()	
-		except:
-			self.sock.close()
+		while True:
+			message = input('> ')
+			if message == 'salir':														
+				self.sock.close()
+				sys.exit()	
+
 
 	def acept_client(self):
+		print("Acepta clientes")
 		while True:			
 			try:
 				client_socket_server, client_address = self.sock.accept()
 				client_socket_server.setblocking(False)
 				self.clients.append(client_socket_server)
-			except Exception as e:
-				print(e)
-		
-
+			except:
+				pass
+	
 	def send_msg_clients(self,msg,client):
 		for receiver in self.clients:
 			try:
@@ -49,6 +50,7 @@ class servidor(object):
 				self.clients.remove(receiver)
 
 	def recv_msg(self):
+		print("Recibe mensajes")
 		while True:
 			if len(self.clients) > 0:
 				for client_socket in self.clients:
@@ -56,7 +58,7 @@ class servidor(object):
 						msg = client_socket.recv(1024)
 						if msg:
 							self.send_msg_clients(msg,client_socket)
-					except Exception as e:
-						print(e)
+					except:
+						pass
 
-serv = servidor()
+serv = Servidor()
